@@ -8,8 +8,9 @@ import json
 
 
 def index(request):
-
-    return HttpResponse("Hello, world. You're at the polls index.",  content_type="text/plain")
+    latest_question_list = Question.objects.order_by('-pub_date')[:5]
+    output = serializers.serialize("json", latest_question_list)
+    return HttpResponse(output)
 
 
 def detail(request, question_id):
