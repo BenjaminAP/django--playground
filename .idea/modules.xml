@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/djangoProject.iml" filepath="$PROJECT_DIR$/.idea/djangoProject.iml" />
-      <module fileurl="file://$USER_HOME$/WebstormProjects/template/.idea/template.iml" filepath="$USER_HOME$/WebstormProjects/template/.idea/template.iml" />
     </modules>
   </component>
 </project>

@@ -1,6 +1,6 @@
-from django.shortcuts import render
 from django.http import HttpResponse
 from django.core import serializers
+from django.views.decorators.csrf import csrf_exempt
 
 from polls.models import Question, Choice
 import json
@@ -10,6 +10,25 @@ import json
 def index(request):
     latest_question_list = Question.objects.order_by('-pub_date')[:5]
     output = serializers.serialize("json", latest_question_list)
+    return HttpResponse(output)
+
+
+def choice_list(request, question_id):
+    print(question_id)
+    question = Question.objects.get(pk=question_id)
+    output = serializers.serialize("json", question.choice_set.all())
+
+    return HttpResponse(output)
+
+
+def delete(request, question_id):
+    q_to_delete = Question.objects.get(pk=question_id)
+    print(q_to_delete)
+
+    q_to_delete.delete()
+    msg = '{msg: "deleted"}'
+
+    output = serializers.serialize('json', msg)
     return HttpResponse(output)
 
 
