@@ -1,6 +1,5 @@
 from django.http import JsonResponse, HttpResponse
-from django.core import serializers
-from polls.serialiazers import PollSerializer
+from polls.serialiazers import QuestionSerializer, ChoiceSerializer
 from django.views.decorators.csrf import csrf_exempt
 
 from polls.models import Question, Choice
@@ -10,16 +9,16 @@ import json
 
 def index(request):
     latest_question_list = Question.objects.order_by('-pub_date')[:5]
-    output = [PollSerializer(q).data for q in latest_question_list]
+    output = [QuestionSerializer(q).data for q in latest_question_list]
     return JsonResponse(output, safe=False)
 
 
 def choice_list(request, question_id):
     print(question_id)
     question = Question.objects.get(pk=question_id)
-    output = serializers.serialize("json", question.choice_set.all())
+    output = [ChoiceSerializer(choice).data for choice in question.choices.all()]
 
-    return HttpResponse(output)
+    return JsonResponse(output, safe=False)
 
 
 def delete(request, question_id):
