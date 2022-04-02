@@ -1,5 +1,6 @@
-from django.http import HttpResponse
+from django.http import JsonResponse, HttpResponse
 from django.core import serializers
+from polls.serialiazers import PollSerializer
 from django.views.decorators.csrf import csrf_exempt
 
 from polls.models import Question, Choice
@@ -9,8 +10,8 @@ import json
 
 def index(request):
     latest_question_list = Question.objects.order_by('-pub_date')[:5]
-    output = serializers.serialize("json", latest_question_list)
-    return HttpResponse(output)
+    output = [PollSerializer(q).data for q in latest_question_list]
+    return JsonResponse(output, safe=False)
 
 
 def choice_list(request, question_id):
