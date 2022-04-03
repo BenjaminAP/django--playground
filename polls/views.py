@@ -38,12 +38,13 @@ def add_poll(request):
             print(json.dumps(new_poll, sort_keys=False, indent=2))
             new_poll = json.loads(request.body, object_hook=lambda d: Namespace(**d))
             q = Question(question_txt=new_poll.question_txt, pub_date=timezone.now())
-            print(q.question_txt)
-            # [q.choices.create(choice_txt=choice.choice_txt, votes=0) for choice in new_poll.choices]
+            q.save()
+            [q.choices.create(choice_txt=choice.choice_txt, votes=0) for choice in new_poll.choices]
+            print(QuestionSerializer(q).data)
             # q.save()
             # print(q)
 
-    return JsonResponse(json.loads(request.body), safe=False)
+    return JsonResponse(QuestionSerializer(q).data, safe=False)
 
 
 def detail(request, question_id):
