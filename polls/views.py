@@ -14,22 +14,18 @@ def index(request):
 
 
 def choice_list(request, question_id):
-    print(question_id)
     question = Question.objects.get(pk=question_id)
     output = [ChoiceSerializer(choice).data for choice in question.choices.all()]
 
     return JsonResponse(output, safe=False)
 
 
-def delete(request, question_id):
-    q_to_delete = Question.objects.get(pk=question_id)
-    print(q_to_delete)
+@csrf_exempt
+def add_poll(request):
+    if request.method == 'POST':
+        print(json.dumps(json.loads(request.body), sort_keys=False, indent=2))
 
-    q_to_delete.delete()
-    msg = '{msg: "deleted"}'
-
-    output = serializers.serialize('json', msg)
-    return HttpResponse(output)
+    return JsonResponse(json.loads(request.body), safe=False)
 
 
 def detail(request, question_id):
