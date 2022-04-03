@@ -8,10 +8,12 @@ from django.views.decorators.csrf import csrf_exempt
 
 from polls.models import Question, Choice
 import json
+
 try:
     from types import SimpleNamespace as Namespace
 except ImportError:
     from argparse import Namespace
+
 
 # Create your views here.
 
@@ -31,8 +33,7 @@ def choice_list(request, question_id):
 @csrf_exempt
 def add_poll(request):
     if request.method == 'POST':
-        new_poll = json.loads(request.body.decode('utf-8'))
-        print()
+        new_poll = json.loads(request.body)
 
         if QuestionSerializer(data=new_poll).is_valid():
             print(json.dumps(new_poll, sort_keys=False, indent=2))
@@ -47,8 +48,15 @@ def add_poll(request):
     return JsonResponse(QuestionSerializer(q).data, safe=False)
 
 
+@csrf_exempt
 def detail(request, question_id):
-    return HttpResponse("You're looking at question %s." % question_id)
+    if request.method == 'DELETE':
+        q_to_delete = Question.objects.get(pk=question_id)
+        q_to_delete.delete()
+
+        return JsonResponse(json.dumps(question_id), safe=False)
+
+    return HttpResponse("Fail to delete question_id=%s" % question_id)
 
 
 def results(request, question_id):
