@@ -1,11 +1,19 @@
+from collections import namedtuple
+
 from django.http import JsonResponse, HttpResponse
+from django.utils import timezone
+
 from polls.serialiazers import QuestionSerializer, ChoiceSerializer
 from django.views.decorators.csrf import csrf_exempt
 
 from polls.models import Question, Choice
 import json
-# Create your views here.
+try:
+    from types import SimpleNamespace as Namespace
+except ImportError:
+    from argparse import Namespace
 
+# Create your views here.
 
 def index(request):
     latest_question_list = Question.objects.order_by('-pub_date')[:5]
@@ -23,7 +31,17 @@ def choice_list(request, question_id):
 @csrf_exempt
 def add_poll(request):
     if request.method == 'POST':
-        print(json.dumps(json.loads(request.body), sort_keys=False, indent=2))
+        new_poll = json.loads(request.body.decode('utf-8'))
+        print()
+
+        if QuestionSerializer(data=new_poll).is_valid():
+            print(json.dumps(new_poll, sort_keys=False, indent=2))
+            new_poll = json.loads(request.body, object_hook=lambda d: Namespace(**d))
+            q = Question(question_txt=new_poll.question_txt, pub_date=timezone.now())
+            print(q.question_txt)
+            # [q.choices.create(choice_txt=choice.choice_txt, votes=0) for choice in new_poll.choices]
+            # q.save()
+            # print(q)
 
     return JsonResponse(json.loads(request.body), safe=False)
 
