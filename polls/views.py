@@ -1,7 +1,7 @@
-from collections import namedtuple
 
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
+from rest_framework import serializers
 
 from polls.serialiazers import QuestionSerializer, ChoiceSerializer
 from django.views.decorators.csrf import csrf_exempt
@@ -32,7 +32,24 @@ def choice_list(request, question_id):
 
 @csrf_exempt
 def add_poll(request):
+    if request.method == 'PUT':
+        new_poll = json.loads(request.body)
+
+        if QuestionSerializer(data=new_poll).is_valid():
+            print(json.dumps(new_poll, sort_keys=False, indent=2))
+
     if request.method == 'POST':
+        # new_poll = QuestionSerializer(data=json.loads(request.body))
+        # print(new_poll.is_valid())
+        #
+        # if new_poll.is_valid():
+        #     new_poll.save()
+        #     print(json.dumps(new_poll.data, sort_keys=True, indent=2))
+        #     # new_poll.
+        # else:
+        #     print(json.dumps(new_poll.data, sort_keys=True, indent=2))
+        #     print(new_poll.errors)
+
         new_poll = json.loads(request.body)
 
         if QuestionSerializer(data=new_poll).is_valid():
@@ -42,8 +59,6 @@ def add_poll(request):
             q.save()
             [q.choices.create(choice_txt=choice.choice_txt, votes=0) for choice in new_poll.choices]
             print(QuestionSerializer(q).data)
-            # q.save()
-            # print(q)
 
     return JsonResponse(QuestionSerializer(q).data, safe=False)
 

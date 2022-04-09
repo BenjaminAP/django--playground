@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from polls.models import Question, Choice
 
@@ -9,8 +10,12 @@ class ChoiceSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    choices = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    choices = ChoiceSerializer(many=True)
 
     class Meta:
         model = Question
         fields = ['id', 'question_txt', 'pub_date', 'choices']
+
+    def create(self, validated_data):
+        choices_data = validated_data.pop('choices')
+        question = Question.objects.create(**validated_data)
