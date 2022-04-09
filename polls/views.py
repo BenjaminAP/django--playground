@@ -1,5 +1,5 @@
 
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseNotFound
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -17,27 +17,25 @@ except ImportError:
 
 # Create your views here.
 
+#  list of polls
 def index(request):
     latest_question_list = Question.objects.order_by('-pub_date')[:5]
     output = [QuestionSerializer(q).data for q in latest_question_list]
     return JsonResponse(output, safe=False)
 
 
+# list of choice of respective poll
 def choice_list(request, question_id):
     question = Question.objects.get(pk=question_id)
     output = [ChoiceSerializer(choice).data for choice in question.choices.all()]
 
     return JsonResponse(output, safe=False)
 
+
+# new Poll
 @csrf_exempt
 def add_poll(request):
     new_poll = json.loads(request.body)
-
-    if request.method == 'PUT':
-        Question.objects.get(pk=new_poll.id)
-
-        if QuestionSerializer(data=new_poll).is_valid():
-            print(json.dumps(new_poll, sort_keys=False, indent=2))
 
     if request.method == 'POST':
 
@@ -63,8 +61,11 @@ def add_poll(request):
     return JsonResponse(QuestionSerializer(q).data, safe=False)
 
 
+#  Do action on Poll with ID.
 @csrf_exempt
 def poll_action(request, question_id):
+
+    # Edit Poll
     if request.method == 'PUT':
         poll_to_be_edited = Question.objects.get(pk=question_id)
 
@@ -82,7 +83,7 @@ def poll_action(request, question_id):
 
         poll_to_be_edited.save()
         print(QuestionSerializer(poll_to_be_edited).data)
-        return JsonResponse(QuestionSerializer(request_poll).data, safe=False)
+        return JsonResponse(QuestionSerializer(poll_to_be_edited).data, safe=False)
         # new_poll = json.loads(request.body)
         # print(json.loads(new_poll, object_hook=lambda d: Namespace(**d)))
 
@@ -93,6 +94,19 @@ def poll_action(request, question_id):
         return JsonResponse(json.dumps(question_id), safe=False)
 
     return HttpResponse("Fail to do Action on poll = %s" % question_id)
+
+
+@csrf_exempt
+def choice(request, choice_id):
+
+    if request.method == 'DELETE':
+        try:
+            choice_to_delete = Choice.objects.get(pk=choice_id)
+            choice_to_delete.delete()
+            return JsonResponse(choice_id, safe=False)
+        except Choice.DoesNotExist:
+            print("Trying to delete non existing choice")
+            HttpResponseNotFound(choice_id)
 
 
 def results(request, question_id):
@@ -115,9 +129,4 @@ def question_by_id(request, question_id):
         serializers.serialize("json", Question.objects.get(pk=question_id).choice_set.all())
     ]
 
-    return HttpResponse(response)
-
-
-def question_choices(request, question_id):
-    response = Question.objects.get(pk=question_id).choice_set.all()
     return HttpResponse(response)
