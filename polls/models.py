@@ -8,6 +8,7 @@ from django.utils import timezone
 
 
 class Question(models.Model):
+
     question_txt = models.CharField(max_length=200)
     pub_date = models.DateTimeField('date publish', null=True, blank=True)
 

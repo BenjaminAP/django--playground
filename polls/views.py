@@ -29,16 +29,26 @@ def choice_list(request, question_id):
 
     return JsonResponse(output, safe=False)
 
-
 @csrf_exempt
 def add_poll(request):
+    new_poll = json.loads(request.body)
+
     if request.method == 'PUT':
-        new_poll = json.loads(request.body)
+        Question.objects.get(pk=new_poll.id)
 
         if QuestionSerializer(data=new_poll).is_valid():
             print(json.dumps(new_poll, sort_keys=False, indent=2))
 
     if request.method == 'POST':
+
+        if QuestionSerializer(data=new_poll).is_valid():
+            print(json.dumps(new_poll, sort_keys=False, indent=2))
+            new_poll = json.loads(request.body, object_hook=lambda d: Namespace(**d))
+            q = Question(question_txt=new_poll.question_txt, pub_date=timezone.now())
+            q.save()
+            [q.choices.create(choice_txt=choice.choice_txt, votes=0) for choice in new_poll.choices]
+            print(QuestionSerializer(q).data)
+
         # new_poll = QuestionSerializer(data=json.loads(request.body))
         # print(new_poll.is_valid())
         #
@@ -50,28 +60,39 @@ def add_poll(request):
         #     print(json.dumps(new_poll.data, sort_keys=True, indent=2))
         #     print(new_poll.errors)
 
-        new_poll = json.loads(request.body)
-
-        if QuestionSerializer(data=new_poll).is_valid():
-            print(json.dumps(new_poll, sort_keys=False, indent=2))
-            new_poll = json.loads(request.body, object_hook=lambda d: Namespace(**d))
-            q = Question(question_txt=new_poll.question_txt, pub_date=timezone.now())
-            q.save()
-            [q.choices.create(choice_txt=choice.choice_txt, votes=0) for choice in new_poll.choices]
-            print(QuestionSerializer(q).data)
-
     return JsonResponse(QuestionSerializer(q).data, safe=False)
 
 
 @csrf_exempt
-def detail(request, question_id):
+def poll_action(request, question_id):
+    if request.method == 'PUT':
+        poll_to_be_edited = Question.objects.get(pk=question_id)
+
+        request_poll = json.loads(request.body, object_hook=lambda d: Namespace(**d))
+        poll_to_be_edited.question_txt = request_poll.question_txt
+
+        for choice in request_poll.choices:
+            try:
+                choice_to_update = Choice.objects.get(pk=choice.id)
+                choice_to_update.choice_txt = choice.choice_txt
+                choice_to_update.save()
+
+            except Choice.DoesNotExist:
+                poll_to_be_edited.choices.create(choice_txt=choice.choice_txt, votes=0)
+
+        poll_to_be_edited.save()
+        print(QuestionSerializer(poll_to_be_edited).data)
+        return JsonResponse(QuestionSerializer(request_poll).data, safe=False)
+        # new_poll = json.loads(request.body)
+        # print(json.loads(new_poll, object_hook=lambda d: Namespace(**d)))
+
     if request.method == 'DELETE':
         q_to_delete = Question.objects.get(pk=question_id)
         q_to_delete.delete()
 
         return JsonResponse(json.dumps(question_id), safe=False)
 
-    return HttpResponse("Fail to delete question_id=%s" % question_id)
+    return HttpResponse("Fail to do Action on poll = %s" % question_id)
 
 
 def results(request, question_id):
